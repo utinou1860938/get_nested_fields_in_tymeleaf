@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="jp" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sample</title>
+</head>
+<body>
+<form id="myForm" th:action="@{/sample/submit}" method="post" th:object="${obj}">
+    <div id="inputContainer">  <!-- サーバーの入力レイヤーを区切る -->
+        <div class="serverDiv">  <!-- カウント変数を使わず、サーバー毎の入力レイヤーをクラスで区切る -->
+            <div th:each="field, stat : *{serverDateList}">  <!-- バインドしたオブジェクトの中のList<ServerDate>serverDateList分eachを回す -->
+                <input type="text" th:field="*{serverDateList[__${stat.index}__].serverName}">  <!-- name="serverDateList[0].serverName" -->
+                <div th:each="innerField, num : *{serverDateList[__${stat.index}__].middlewareList}">  <!-- バインドしたオブジェクトの中の該当するserverDateListのmiddlewareList分eachを回す -->
+                    <div class="middlewareDiv">  <!-- カウント変数を使わず、サーバー毎のミドルウェア入力レイヤーをクラスで区切る -->
+                        <input type="text"
+                               th:field="*{serverDateList[__${stat.index}__].middlewareList[__${num.index}__].middlewareName}">  <!-- name="serverDateList[0].middlewareList[0].middlewareName" -->
+                        <input type="text"
+                               th:field="*{serverDateList[__${stat.index}__].middlewareList[__${num.index}__].middlewareVersion}">  <!-- name="serverDateList[0].middlewareList[0].middlewareVersion" -->
+                        <img src="/cs_skr_plus.png" class="addMiddleware">  <!-- ミドルウェアの行追加ボタン -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button type="button" id="addInput">サーバー追加</button>
+    <button type="submit">送信</button>
+</form>
+
+<!-- JQuery読み込み-->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"
+        integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g="
+        crossorigin="anonymous"></script>
+</body>
+<script>
+    // サーバー追加ボタンを押した時の処理
+    $("#addInput").click(function () {
+        // サーバー入力レイヤーの最初のdivを取得しクローン
+        const original = $("#inputContainer .serverDiv").first();
+        const clone = original.clone();
+
+        // 入力中のサーバー数を取得
+        const currentIndex = $("#inputContainer .serverDiv").length;
+
+        // クローンしたHTML要素の添字[i]を繰り上げる処理
+        clone.find("input").each(function () {
+            // input要素のname属性を取得
+            const name = $(this).attr("name");
+
+            // serverDateListの添字を繰り上げたものに変更し挿入
+            const newName = name.replace(/serverDateList\[\d+\]/, "serverDateList[" + currentIndex + "]");
+            $(this).attr("name", newName);
+        });
+
+        //　クローンを挿入
+        $("#inputContainer").append(clone);
+    });
+
+    // プラスボタン押下時の処理
+    $(document).on('click', '.addMiddleware', function () { // 動的に追加されるボタンなのでon属性使用
+        const parentDiv = $(this).parent().parent(); // 押されたボタンの親要素の親要素を取得　オブジェクト内のmiddlewareListに当たる部分全体を取得
+        // ミドルウェア入力レイヤーの最初のdivを取得しクローン
+        const original = parentDiv.children('.middlewareDiv').first();
+        const clone = original.clone();
+
+        // middlewareList内のミドルウェア数を取得
+        const currentIndex = parentDiv.find('.middlewareDiv').length;
+
+        // middlewareListの添字を繰り上げたものに変更し挿入
+        clone.find("input").each(function () {
+            const name = $(this).attr("name");
+            const newName = name.replace(/middlewareList\[\d+\]/, "middlewareList[" + currentIndex + "]");
+            $(this).attr("name", newName);
+        });
+
+        // middlewareListの最後に追加
+        parentDiv.append(clone);
+    });
+</script>
+</html>
